@@ -19,39 +19,59 @@ class Tree
 
     def insert val, root=@root
         raise StandardError.new("Value already exists") if root.data == val
-        self.insert val, root.lchild if (root.data > val && root.lchild)
-        self.insert val, root.rchild if (root.data < val && root.rchild)
+        insert val, root.lchild if (root.data > val && !root.lchild)
+        insert val, root.rchild if (root.data < val && !root.rchild)
         newNode = Node.new(val)
         root.lchild = newNode if root > newNode
         root.rchild = newNode if root < newNode
     end
 
     def delete val, root=@root
-        return nil if root.lchild && root.rchild
+        return nil if !root.lchild && !root.rchild
         if val = root.data
-            self.delete root.lchild.data, root.lchild
-            self.delete root.rchild.data, root.rchild
-            root.lchild = nil if root.lchild
-            root.rchild = nil if root.rchild
+            delete root.lchild.data, root.lchild
+            delete root.rchild.data, root.rchild
+            root.lchild = nil if !root.lchild
+            root.rchild = nil if !root.rchild
         elsif val < root.data
-            self.delete val, root.lchild
+            delete val, root.lchild
         else val > root.data
-            self.delete val, root.rchild
+            delete val, root.rchild
         end
     end
 
     def find val, root=@root
-        return nil if root
+        raise StandardError.new("The value could not be found") if !root
         return root if root.data == val
-        self.find val, root.lchild if root.data > val
-        self.find val, root.rchild if root.data < val
+        node = find val, root.lchild if root.data > val
+        node = find val, root.rchild if root.data < val
+        return node
     end
 
+    #iterative level_order
     def level_order
-        puts "do something" unless block_given?
+        raise StandardError.new("Empty tree") if !root
+        queue = []
+        nodes = [] unless block_given?
+        queue.push(root)
+        while(!queue.empty?)
+            current = queue[0]
+            nodes.push(current.data) unless block_given?
+            current.data = yield(current.data) if block_given?
+            queue.push(current.lchild) if current.lchild
+            queue.push(current.rchild) if current.rchild
+            queue.shift
+        end
+        return nodes unless block_given?
+    end
 
-        puts "do something with the implicit block"
+    def rec_level_order root=@root
+        raise StandardError.new("Empty tree") if !root
+        root.data = yield(root.data) if block_given?
+        if block_given?
+            rec_level_order root.lchild
+            rec_level_order root.rchild
+        return root.data unless block_given?
     end
         
 end
-        
