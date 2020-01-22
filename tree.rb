@@ -19,11 +19,15 @@ class Tree
 
     def insert val, root=@root
         raise StandardError.new("Value already exists") if root.data == val
-        insert val, root.lchild if (root.data > val && !root.lchild)
-        insert val, root.rchild if (root.data < val && !root.rchild)
-        newNode = Node.new(val)
-        root.lchild = newNode if root > newNode
-        root.rchild = newNode if root < newNode
+        temp = val > root.data ? root.rchild : root.lchild
+        if !temp.lchild && val < temp.data
+            temp.lchild = Node.new(val)
+        elsif
+            !temp.rchild && val > temp.data
+            temp.rchild = Node.new(val)
+        else
+            insert(val, temp)
+        end
     end
 
     def delete val, root=@root
@@ -65,13 +69,66 @@ class Tree
         return nodes unless block_given?
     end
 
-    def rec_level_order root=@root
+    def inorder root=@root, nodes=[]
         raise StandardError.new("Empty tree") if !root
-        root.data = yield(root.data) if block_given?
         if block_given?
-            rec_level_order root.lchild
-            rec_level_order root.rchild
-        return root.data unless block_given?
+            inorder root.lchild,  if root.lchild
+            yield(root.data)
+            inorder root.rchild if root.rchild
+        else
+            inorder(root.lchild, nodes) if root.lchild
+            nodes.push(root.data)
+            inorder(root.rchild, nodes) if root.rchild
+        end
+        nodes unless block_given?
+    end
+
+    def preorder root=@root, nodes=[]
+        raise StandardError.new("Empty tree") if !root
+        if block_given?
+            yield(root.data)
+            preorder root.lchild if root.lchild
+            preorder root.rchild if root.rchild
+        else
+            nodes.push(root.data)
+            preorder(root.lchild, nodes) if root.lchild
+            preorder(root.rchild, nodes) if root.rchild
+        end
+        nodes unless block_given?
+    end
+
+    def postorder root=@root, nodes=[]
+        raise StandardError.new("Empty tree") if !root
+        if block_given?
+            postorder root.lchild if root.lchild
+            postorder root.rchild if root.rchild
+            yield(root.data)
+        else
+            postorder(root.lchild, nodes) if root.lchild
+            postorder(root.rchild, nodes) if root.rchild
+            nodes.push(root.data)
+        end
+        nodes unless block_given?
+    end
+
+    def depth node=@root
+        return 0 if !node
+        depth = 1
+        left = depth(node.lchild)
+        right = depth(node.rchild)
+        depth += left > right ? left : right
+    end
+
+    def balanced?
+        left = depth(@root.lchild)
+        right = depth(@root.rchild)
+        diff = (left - right).abs
+        return diff < 2 ? true : false
+    end
+
+    def rebalance!
+        arr = inorder
+        initialize(arr)
     end
         
 end
